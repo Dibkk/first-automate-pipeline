@@ -8,12 +8,15 @@ URL = "http://127.0.0.1:5000/emps"
 # print(response.json())
 
 # data = {
-#             "name":"Hito",
-#             "age":20,
-#             "email":"Kook@gmail.com",
-#             "Department":"Chef"
-#         }
-# response=requests.post(URL,json.dumps(data))
+#         "name": "Hito",
+#         "age": 20,
+#         "email": "kook@example.com",
+#         "Department": "Chef"
+#     }
+# response=requests.post(URL,json=data)
+# print("POST status:", response.status_code, response.text)
 
-response=requests.get(URL)
-print(response.json())
+print("\n")
+
+response = requests.get(URL)
+print("POST status:", response.status_code, response.text)

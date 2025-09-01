@@ -10,26 +10,35 @@ client = MongoClient("mongodb://localhost:27017/")
 mydb = client['idb']
 collection = mydb['emp']
 
+def serialize_doc(doc):
+    if not doc:
+        return None
+    doc = dict(doc)
+    doc['_id'] = str(doc['_id'])
+    if 'Department' in doc and 'department' not in doc:
+        doc['department'] = doc.pop('Department')
+    return doc
+
 @app.errorhandler(InvalidId)
 def invalid_object_id(error):
     return jsonify({"error": "Invalid ID format"}), 400
 
 @app.route('/emps', methods=['GET'])
-def get_all_users():
+def get_all_emps():
     try:
         data = []
         for i in collection.find():
-            data.append({"_id":str(i['_id']), 'name':i['name'], "age":i['age'], "email":i['email'], "Department":i['Department']})
+            data.append(serialize_doc(i))
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/emps/<emp_id>', methods=['GET'])
-def get_emp(emp_id):
+@app.route('/emps/<name>', methods=['GET'])
+def get_emp(name):
     try:
-        emp = collection.find_one({"_id": ObjectId(emp_id)})
+        emp = collection.find_one({"name": name})
         if emp:
-            return jsonify(emp)
+            return jsonify(serialize_doc(emp))
         else:
             return jsonify({"error": "User not found"}), 404
     except InvalidId:
@@ -38,26 +47,23 @@ def get_emp(emp_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/emps', methods=['POST'])
-def create_user():
+def create_emps():
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid or missing JSON body"}), 400
         
-        required_fields = ["name", "age", "email", "department"]
+        required_fields = ["name", "age", "email", "Department"]
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
         
-        existing_emp = collection.find_one({"_id": data['_id']})
-        if existing_emp:
-            return jsonify({"error": "You are already exists"}), 409
-        
         result = collection.insert_one(data)
+        new_emp = collection.find_one({"_id": result.inserted_id})
         
-        # new_emp = collection.find_one({"_id": result.inserted_id})
-        return jsonify({
-            "message": "Employee created successfully",
-            "new employee" : data
-        }), 201
+        return {
+            "_id": str(new_emp['_id']), "name": new_emp['name'], "age": new_emp['age'], "email": new_emp['email'], "Department": new_emp['Department']
+        }, 201
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
