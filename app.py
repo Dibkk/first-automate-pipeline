@@ -9,6 +9,10 @@ client = MongoClient("mongodb://database:27017/")
 mydb = client['idb']
 collection = mydb['emp']
 
+@app.route('/')
+def home():
+    return "<h1>Welcome to the Employee API</h1>"
+
 def serialize_doc(doc):
     if not doc:
         return None
@@ -66,18 +70,6 @@ def create_emps():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-def initData():
-    data = {
-        "name": "Hito",
-        "age": 20,
-        "email": "kook@example.com",
-        "Department": "Chef"
-    }
-    if collection.count_documents({}) == 0:
-        collection.insert_one(jsonify(data))
-        print("Complete")
 
 if __name__ == "__main__":
-    initData() #insert data
-    app.run(debug=True)
+   app.run(host="0.0.0.0", port=5000)
