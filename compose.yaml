@@ -1,0 +1,22 @@
+name: sample-pipeline-project
+version: '0.5'
+
+services:
+  backend: 
+    build: .
+    image: python-project
+    container_name: backend-api
+    ports: 
+      - "5000:5000"
+  database:
+    container_name: api-database
+    image: mongo
+    ports: 
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - mongo-configdb:/data/configdb
+
+volumes:
+  mongo-data:
+  mongo-configdb: 

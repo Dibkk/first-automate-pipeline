@@ -2,11 +2,10 @@ from flask import Flask, request, jsonify
 from bson import ObjectId
 from bson.errors import InvalidId
 from pymongo import MongoClient
-import json
 
 app = Flask(__name__)
 
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb://database:27017/")
 mydb = client['idb']
 collection = mydb['emp']
 
@@ -68,5 +67,17 @@ def create_emps():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+def initData():
+    data = {
+        "name": "Hito",
+        "age": 20,
+        "email": "kook@example.com",
+        "Department": "Chef"
+    }
+    if collection.count_documents({}) == 0:
+        collection.insert_one(jsonify(data))
+        print("Complete")
+
 if __name__ == "__main__":
+    initData() #insert data
     app.run(debug=True)
