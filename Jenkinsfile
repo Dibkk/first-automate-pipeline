@@ -7,17 +7,22 @@ pipeline {
     }
 
     environment {
-        REGISTRY = "kerdsuk"
-        IMAGE_NAME = "kerdsuk/python-project"
+        REGISTRY = "docker.io/kerdsuk"
+        IMAGE_NAME = "python-project"
         TAG = "${env.GIT_COMMIT?.take(7) ?: env.BUILD_NUMBER}"
-        FULL_IMAGE = "${env.REGISTRY}/${env.IMAGE_NAME}:${env.TAG}"
+        FULL_IMAGE = "${REGISTRY}/${IMAGE_NAME}:${TAG}"
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('Build') {
             steps {
-                sh "docker build -t ${FULL_IMAGE} ."
+                sh "docker build --pull -t ${FULL_IMAGE} ."
             }
         }
 
@@ -33,13 +38,10 @@ pipeline {
 
         stage('Deploy to K8s') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-                    // write kubeconfig to KUBECONFIG path for kubectl
-                    sh 'export KUBECONFIG=$KUBECONFIG_FILE && kubectl config view --minify'
-                    // update deployment image and wait for rollout
-                    sh "export KUBECONFIG=$KUBECONFIG_FILE && kubectl set image deployment/server-deployment server=${FULL_IMAGE} --record"
-                    sh "export KUBECONFIG=$KUBECONFIG_FILE && kubectl rollout status deployment/server-deployment --timeout=120s"
-                }
+                sh '''
+                kubectl apply -f server-deployment.yml
+                kubectl apply -f mongo-deployment.yml
+                '''
             }
         }
     }
